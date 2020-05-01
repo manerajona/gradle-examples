@@ -1,0 +1,161 @@
+// Configuration
+// Delegates to Project interface (can use Gradle as well)
+import java.text.SimpleDateFormat
+
+plugins {
+    id 'groovy'
+    id 'java'
+}
+
+group 'com.manerajona'
+version '1.0-SNAPSHOT'
+
+sourceCompatibility = 1.8
+
+//Properties
+
+ logger.info ">>> build.gradle: $project.gradle.gradleVersion"
+ logger.info ">>> build.gradle: $project.gradle.gradleHomeDir"
+ logger.info ">>> build.gradle: $project.gradle.gradleUserHomeDir"
+ logger.info ">>> build.gradle: $buildFile"
+ logger.info ">>> build.gradle: ${relativePath(buildFile)}"
+
+logger.info """
+******************************************************************************
+Welcome to Gradle $gradle.gradleVersion - http://www.gradle.org
+Gradle home is set to: $gradle.gradleHomeDir
+Gradle user directory is set to: $gradle.gradleUserHomeDir
+
+Base directory: $projectDir
+Running script  ${relativePath(buildFile)}
+******************************************************************************
+"""
+
+logger.info "has property: ${project.gradle.hasProperty('$gradleVersion')}"
+
+logger.info "has property: ${hasProperty('projectDir')}"
+
+logger.info project.gradlePropertiesProp
+logger.info "has property: ${project.hasProperty('gradlePropertiesProp')}"
+
+if( hasProperty('gradlePropertiesProp') ) {
+    logger.info "The property file value is $gradlePropertiesProp"
+}else{
+    logger.info "Oops! gradlePropertiesProp can't be found"
+}
+
+if( hasProperty('jonathan') ) {
+    logger.info "The property file value is $jonathan"
+}else{
+    logger.info "Oops! jonathan can't be found"
+}
+
+if( project.hasProperty('commandLineProjectProp') ) {
+    logger.info "The property file value is $commandLineProjectProp"
+}else{
+    logger.info "Oops! commandLineProjectProp can't be found"
+}
+
+project.ext.sayHello = "Hello!" // property added with ExtraPropertiesExtension
+if( project.hasProperty('sayHello') ) {
+    logger.info project.sayHello
+}
+
+
+// Tasks
+
+task hi
+
+project.hi.doLast {
+    logger.info "Hi!"
+}
+
+task hello {
+    description = "Log the name of the task"
+    group = "Welcome"
+
+    doLast{
+        logger.info "My name is $name and this is my doLast defined Action"
+    }
+
+    doFirst{
+        logger.info "My name is $name and this is my doFirst defined Action"
+    }
+}
+logger.info hello.description
+logger.info hello.group
+
+hello.doLast {
+    logger.info "My name is $name and this is my 4th doFirst defined Action"
+}
+
+hello.doLast {
+    logger.info "My name is $name and this is my very last doLast defined Action"
+}
+
+hello.doFirst {
+    logger.info "My name is $name and this is my very first doFirst defined Action"
+}.doLast {
+    logger.info "My name is $name and this is my other very very last doLast defined Action"
+}
+
+
+// Task dependencies
+
+task doStartProcess {
+    doLast{
+        logger.info "$name - Now starting the process - OK!"
+    }
+}
+
+task doStep2{
+    doLast{
+        logger.info "$name - Performed OK!"
+    }
+}
+
+task doSomethingInTheMiddle (dependsOn: [ 'doStartProcess', tasks.findAll { task -> task.name.startsWith('doStep2') } ]) {
+    doLast{
+        logger.info "$name - Performed the middle step - OK!"
+    }
+}
+
+task doFinished (dependsOn: ['doSomethingInTheMiddle', 'doStep2'])   {
+    doLast{
+        logger.info "$name - Done - OK! >>> with version=$version"
+    }
+}
+
+// Dependencies assigned dynamically
+if ( Math.random() < 0.5){
+	doSomethingInTheMiddle.dependsOn doStartProcess, tasks.findAll { task -> task.name.startsWith('doStep2') }
+}
+
+// Task graph
+project.gradle.taskGraph.whenReady {taskGraph ->
+    if (taskGraph.hasTask(doStep2)) {
+        project.version = '1.0'
+    } else {
+        project.version = '1.0-SNAPSHOT'
+    }
+    logger.info ">>> $project.gradle.taskGraph.allTasks"
+}
+
+project.gradle.taskGraph.beforeTask{task ->
+    logger.info "+++ Before task $task.name"
+}
+
+project.gradle.taskGraph.afterTask{task ->
+    logger.info "+++ Finished task $task.name"
+}
+
+
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile 'org.codehaus.groovy:groovy-all:2.3.11'
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}

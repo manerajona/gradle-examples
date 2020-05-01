@@ -1,0 +1,5 @@
+// Initialization
+// Delegates to Settings interface (can use Gradle as well)
+rootProject.name = 'gradle-mastery'
+include 'handson-groovy'
+
